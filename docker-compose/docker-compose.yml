@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+    open-vpn:
+        image: zalgonoise/openvpn-server
+        container_name: "ovpn"
+        cap_add:
+          - "NET_ADMIN"
+        devices:
+          - "/dev/net/tun"
+        ports:
+          - "1194:1194/udp"
+        restart: always
+        stdin_open: true
+        tty: true
+        volumes:
+          - $OVPN_DATA:/etc/openvpn
+        network_mode: "bridge"
+        env_file:
+          - ovpn.env

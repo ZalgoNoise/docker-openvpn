@@ -1,8 +1,11 @@
 #!/bin/bash
 _datapath='/etc/openvpn'
 _genclient(){
-     echo "Creating a client. Please enter a username: "
-     read OVPN_CLIENT
+     if [ -z $OVPN_CLIENT ]
+     then  echo "Creating a client. Please enter a username: "
+           read OVPN_CLIENT
+     fi
+
      bash /usr/local/bin/easyrsa build-client-full $OVPN_CLIENT nopass \
      && bash /usr/local/bin/ovpn_getclient $OVPN_CLIENT > $_datapath/clients/$OVPN_CLIENT.ovpn
 }
@@ -54,15 +57,15 @@ if ! [ -d $_datapath/pki ]
 then bash usr/local/bin/ovpn_initpki
 fi
 
-# Setting up user
+# Setting up users if none exist OR if the $OVPN_CLIENT environment variable is set
 
 if ! [ -d $_datapath/clients ]
 then mkdir $_datapath/clients
 fi
 
-if ! [ -f $_datapath/clients/* ]
+if ! [ -f $_datapath/clients/* ] || ! [ -z $OVPN_CLIENT ]
 then
    _genclient
 fi
 
-bash /usr/local/bin/ovpn_run &
+bash /usr/local/bin/ovpn_run
