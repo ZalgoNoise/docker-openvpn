@@ -15,6 +15,6 @@ services:
         tty: true
         volumes:
           - $OVPN_DATA:/etc/openvpn
-        network_mode: "host"
+        network_mode: "bridge"
         env_file:
           - ovpn.env
