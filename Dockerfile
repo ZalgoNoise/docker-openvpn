@@ -11,13 +11,10 @@ EXPOSE 1194/udp
 # Allow entrypoint script to autoconfigure a new server (for easy subnetting)
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["ovpn_run"]
-# Needed by scripts
-ENV OPENVPN /etc/openvpn
-ENV EASYRSA /usr/share/easy-rsa
-ENV EASYRSA_PKI $OPENVPN/pki
-ENV EASYRSA_VARS_FILE $OPENVPN/vars
-# Prevents refused client connection because of an expired CRL
-ENV EASYRSA_CRL_DAYS 3650
+# Needed by scripts - combined to a single layer
+# $EASYRSA_CRL_DAYS : Prevents refused client connection because of an expired CRL
+ENV OPENVPN="/etc/openvpn" EASYRSA="/usr/share/easy-rsa" EASYRSA_PKI="$OPENVPN/pki" EASYRSA_VARS_FILE="$OPENVPN/vars" EASYRSA_CRL_DAYS="3650"
+
 # One single layer for adding files
 ADD ./rootfs /
 
