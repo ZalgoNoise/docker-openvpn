@@ -1,5 +1,7 @@
 #!/bin/bash
+# Set working directory
 _datapath='/etc/openvpn'
+# Function to summarize generating a client and outputting .ovpn file
 _genclient(){
      if [ -z $OVPN_CLIENT ]
      then  echo "Creating a client. Please enter a username: "
@@ -10,6 +12,11 @@ _genclient(){
      && bash /usr/local/bin/ovpn_getclient $OVPN_CLIENT > $_datapath/clients/$OVPN_CLIENT.ovpn
 }
 
+# Change into directory to execute commands without creating the folders in /
+if ! [ -d $_datapath ]
+then mkdir -p $_datapath
+fi
+cd $_datapath
 
 # Checking if files already exist
 # Setting up server
@@ -56,8 +63,8 @@ fi
 
 # Setting up keys
 
-if ! [ -f $_datapath/crl.pem ]
-then bash usr/local/bin/ovpn_initpki
+if ! [ -d $_datapath/pki ]
+then bash /usr/local/bin/ovpn_initpki
 fi
 
 # Setting up users if none exist OR if the $OVPN_CLIENT environment variable is set

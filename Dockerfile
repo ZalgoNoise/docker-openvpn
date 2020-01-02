@@ -13,7 +13,11 @@ ENTRYPOINT ["/entrypoint.sh"]
 CMD ["ovpn_run"]
 # Needed by scripts - combined to a single layer
 # $EASYRSA_CRL_DAYS : Prevents refused client connection because of an expired CRL
-ENV OPENVPN="/etc/openvpn" EASYRSA="/usr/share/easy-rsa" EASYRSA_PKI="$OPENVPN/pki" EASYRSA_VARS_FILE="$OPENVPN/vars" EASYRSA_CRL_DAYS="3650"
+ENV OPENVPN="/etc/openvpn" \
+    EASYRSA="/usr/share/easy-rsa" \
+    EASYRSA_PKI="/etc/openvpn/pki" \
+    EASYRSA_VARS_FILE="/etc/openvpn/vars" \
+    EASYRSA_CRL_DAYS="3650"
 
 # One single layer for adding files
 ADD ./rootfs /
