@@ -12,6 +12,115 @@ OpenVPN server in a Docker container complete with an EasyRSA PKI CA.
 Extensively tested on [Digital Ocean $5/mo node](http://bit.ly/1C7cKr3) and has
 a corresponding [Digital Ocean Community Tutorial](http://bit.ly/1AGUZkq).
 
+___
+
+## Zalgo's OpenVPN Server
+
+#### Instructions
+
+To prepare a fresh server, make sure you export an environment variable for `OVPN_DATA`, regardless if you're adding it as a volume or attaching a local folder:
+
+```bash
+export OVPN_DATA="$HOME/ovpn-data-example"
+```
+
+Now with Docker Compose, you can create an interactive instance to start configuring the server. The `entrypoint.sh` script will detect whether the needed files are present and run the process of creating them if needed. The `.env` file may help you defining a deployment without having to type in your Public IP and desired custom subnet everytime you need to re-deploy.
+
+```bash
+docker-compose run --rm open-vpn
+```
+
+After creating all of the keys and your first client, simply launch the service with:
+
+```bash
+docker-compose up -d
+```
+
+
+#### Features introduced
+
+1. Reduced number of layers to 9.
+1. Added an `entrypoint.sh` script to help with new server and user creation.
+1. Moved all copied content into a single `/rootfs` folder.
+1. Summarized all actions in a single `docker-compose.yml` file
+
+
+#### The Dockerfile
+
+The original Dockerfile was modified to squash multiple `RUN`, `ENV` and `ADD` layers.
+
+The added files are placed in a single `rootfs` folder composed of the same structure of the root directory where the files are added.
+
+All `RUN` and `ENV` layers easily combined on the same line.
+
+Added `ENTRYPOINT ["/entrypoint.sh"]` layer.
+
+
+#### The entrypoint.sh file
+
+In this script, a set of conditionals are looking for certain existing files in the `/etc/openvpn/` directory. If they don't exist, the appropriate `bin` executables will be called.
+
+With a new configuration, the setup will look for the env variables:
++ `OVPN_SERVER` for defining your cloud server's public IP.
++ `OVPN_SUBNET` to set a custom subnet (defaults to 10.8.0.0/24)
+
+If these aren't provided initially with the `.env` file, they will be requested upon execution.
+
+Creating a new client is triggered whenever the `/etc/openvpn/clients` folder is empty __or__ if the environment variable `OVPN_CLIENT` is set. This basically is a function using this variable to create a client and spit out the `.ovpn` file.
+
+#### VPN Server Configuration
+
+I've transposed the best that I could all of the settings I've been using over the years with OpenVPN servers on bare-metal and cloud VMs. 
+
+I don't want the server for privacy reasons such as hiding my traffic from my ISP. Rather, I use it as a secure way to access "nodes" in my localhost regardless where they are and what is their internet connection.
+
+For that reason, the client profiles are configured with split tunelling as opposed to fully encrypted tunels. That's why this is _your localhost in your pocket._
+
+```bash
+bash /usr/local/bin/ovpn_genconfig \
+     -u udp://${OVPN_SERVER} \
+     -p "redirect-gateway def1 bypass-dhcp" \
+     -e "sndbuf 0" \
+     -e "rcvbuf 0" \
+     -e "topology subnet" \
+     -e "ifconfig-pool-persist ipp.txt" \
+     -E 'pull-filter ignore "route-gateway"' \
+     -E "route 0.0.0.0 192.0.0.0 net_gateway" \
+     -E "route 64.0.0.0 192.0.0.0 net_gateway" \
+     -E "route 128.0.0.0 192.0.0.0 net_gateway" \
+     -E "route 192.0.0.0 192.0.0.0 net_gateway" \
+     -E "sndbuf 0" \
+     -E "rcvbuf 0" \
+     -E "resolv-retry infinite" \
+     -E "persist-key" \
+     -E "persist-tun" \
+     -E "setenv opt block-outside-dns" \
+     -E "key-direction 1" \
+     -E "verb 3" \
+     -s "${OVPN_SUBNET}/24" \
+     -d \
+     -N \
+     -z
+
+```
+
+#### Use Cases
+
+I've used this on Linux and Android. It works well under Linux on `network_mode: "bridged"` to allow creating an isolated namespace for the OpenVPN server container. It also works well on Linux on `network_mode: "host"` if you wish for the VPN server host to hold directly the Gateway IP (the Linux host should retrieve the 10.8.0.1 address).
+
+Clients can connect via the Android app for OpenVPN and have full access to the subnet if you didn't set any restrictions.
+
+Clients on Linux can setup a systemd profile _or_ use a Docker container as well.
+
+You can expand your network by creating more clients even if containerized (checkout my docker-nginx-vpn repo) and host your private content _only_ on your custom VPN. Each gets a fixed IP address definable under the IP-Pool (`/etc/openvpn/ipp.txt`).
+
+Still be able to access your machine regardless of enterprise network security.
+
+___
+
+
+
+
 #### Upstream Links
 
 * Docker Registry @ [kylemanna/openvpn](https://hub.docker.com/r/kylemanna/openvpn/)
