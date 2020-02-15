@@ -1,15 +1,22 @@
 #!/bin/bash
 # Set working directory
 _datapath='/etc/openvpn'
+_clibuild(){
+	for i in $@
+	do bash /usr/local/bin/easyrsa build-client-full $i nopass \
+     	   && bash /usr/local/bin/ovpn_getclient $i > $_datapath/clients/$i.ovpn
+	done
+}
+
+
 # Function to summarize generating a client and outputting .ovpn file
 _genclient(){
-     if [ -z $OVPN_CLIENT ]
-     then  echo "Creating a client. Please enter a username: "
-           read OVPN_CLIENT
+     if [ ${#OVPN_CLIENT[@]} -eq 0 ]
+     then  echo -e "Creating clients. Separate clients using spaces \n(e.g.: admin-alpha-01 admin-alpha-02 admin-beta)\nEnter a username: "
+           read OVPN_CLIENT_STR
+	   _clibuild $OVPN_CLIENT_STR
+     else _clibuild ${OVPN_CLIENT[@]}
      fi
-
-     bash /usr/local/bin/easyrsa build-client-full $OVPN_CLIENT nopass \
-     && bash /usr/local/bin/ovpn_getclient $OVPN_CLIENT > $_datapath/clients/$OVPN_CLIENT.ovpn
 }
 
 # Change into directory to execute commands without creating the folders in /
