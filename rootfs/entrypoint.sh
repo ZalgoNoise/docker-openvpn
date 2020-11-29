@@ -1,42 +1,63 @@
 #!/bin/bash
+
+if [ "$DEBUG" == "1" ]; then
+  set -x
+fi
 # Set working directory
-_datapath='/etc/openvpn'
+export _datapath=/etc/openvpn
+
 _clibuild(){
-	for i in $@
-	do bash /usr/local/bin/easyrsa build-client-full $i nopass \
-     	   && bash /usr/local/bin/ovpn_getclient $i > $_datapath/clients/$i.ovpn
+    for (( i = 0 ; i < ${#OVPN_CLIENT_ARR[@]} ; i++ ))
+	do bash /usr/local/bin/easyrsa build-client-full ${#OVPN_CLIENT_ARR[${i}]} nopass \
+     	   && bash /usr/local/bin/ovpn_getclient ${#OVPN_CLIENT_ARR[${i}]} > ${_datapath}/clients/${#OVPN_CLIENT_ARR[${i}]}.ovpn
 	done
 }
 
 
 # Function to summarize generating a client and outputting .ovpn file
 _genclient(){
-     if [ ${#OVPN_CLIENT[@]} -eq 0 ]
-     then  echo -e "Creating clients. Separate clients using spaces \n(e.g.: admin-alpha-01 admin-alpha-02 admin-beta)\nEnter a username: "
-           read OVPN_CLIENT_STR
-	   _clibuild $OVPN_CLIENT_STR
-     else _clibuild ${OVPN_CLIENT[@]}
-     fi
+
+    OVPN_CLIENT_ARR=( $(echo "${OVPN_CLIENT}") )
+
+    if ! [[ ${#OVPN_CLIENT_ARR[@]} > 0 ]]
+    then  
+        echo -e "Creating clients. Separate clients using spaces \n(e.g.: admin-alpha-01 admin-alpha-02 admin-beta)\nEnter a username: "
+        read OVPN_CLIENT_STR
+
+        if ! [[ -z ${OVPN_CLIENT_STR} ]]
+        then
+            OVPN_CLIENT_ARR=( $(echo "${OVPN_CLIENT_STR}") )
+            _clibuild
+        else
+            echo "No client string provided. Defaulting to 'admin'."
+            OVPN_CLIENT_ARR=("admin")
+            _clibuild
+        fi
+    else   
+        _clibuild 
+    fi
 }
 
 # Change into directory to execute commands without creating the folders in /
-if ! [ -d $_datapath ]
-then mkdir -p $_datapath
+if ! [[ -d ${_datapath} ]]
+then mkdir -p ${_datapath}
 fi
-cd $_datapath
+cd ${_datapath}
 
 # Checking if files already exist
 # Setting up server
-if ! [ -f $_datapath/openvpn.conf ] || ! [ -f $_datapath/ovpn_env.sh ] || ! [ -d $_datapath/ccd ]
+if ! [[ -f ${_datapath}/openvpn.conf ]] \
+|| ! [[ -f ${_datapath}/ovpn_env.sh ]] \
+|| ! [[ -d ${_datapath}/ccd ]]
 then
      # Fetch needed environment variables
 
-     if [ -z $OVPN_SERVER ]
+     if [[ -z ${OVPN_SERVER} ]]
      then echo -n "Define your public server IP (i.e.: 255.255.255.255): "
          read OVPN_SERVER
      fi
 
-     if [ -z $OVPN_SUBNET ]
+     if [[ -z ${OVPN_SUBNET} ]]
      then echo -n "Define your custom subnet (i.e.: 10.8.0.0): "
          read OVPN_SUBNET
      fi
@@ -68,21 +89,33 @@ then
      -z
 fi
 
+# Setting up RSA vars file
+
+if ! [[ -f  ${_datapath}/vars ]]
+then
+    bash /usr/local/bin/easyrsa_vars export > ${_datapath}/vars
+fi
+
 # Setting up keys
 
-if ! [ -d $_datapath/pki ]
-then bash /usr/local/bin/ovpn_initpki
+if ! [[ -d ${_datapath}/pki ]]
+then
+    bash /usr/local/bin/ovpn_initpki
 fi
 
-# Setting up users if none exist OR if the $OVPN_CLIENT environment variable is set
+# Setting up users if none exist OR if the ${OVPN_CLIENT} environment variable is set
 
-if ! [ -d $_datapath/clients ]
-then mkdir $_datapath/clients
+if ! [[ -d ${_datapath}/clients ]]
+then mkdir ${_datapath}/clients
 fi
 
-if ! [ -f $_datapath/clients/* ] || ! [ -z $OVPN_CLIENT ]
+if ! [[ -f ${_datapath}/clients/* ]] || ! [[ -z ${OVPN_CLIENT} ]]
 then
    _genclient
 fi
 
+if [ "$DEBUG" == "1" ]; then
+  set +x
+fi
 bash /usr/local/bin/ovpn_run
+
