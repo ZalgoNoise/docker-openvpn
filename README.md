@@ -67,6 +67,8 @@ With a new configuration, the setup will look for the env variables:
 
 If these aren't provided initially with the `.env` file, they will be requested upon execution.
 
+_Note_: Optionally, you can also define a number for `OPENVPN_TUNNEL_NO`, which defines the tunnel's device number (e.g. `tun0` or `tun1`). By default, it will generate a `tun0` configuration.
+
 Creating a new client is triggered whenever the `/etc/openvpn/clients` folder is empty __or__ if the environment variable `OVPN_CLIENT` is set. This basically is a function using this variable to create a client and spit out the `.ovpn` file.
 
 #### VPN Server Configuration
@@ -117,9 +119,16 @@ You can expand your network by creating more clients even if containerized (chec
 
 Still be able to access your machine regardless of enterprise network security.
 
+#### Updates
+
+__[v1.3]__ 
+
+ - Corrected missing EasyRSA vars file
+ - Corrected multi-user parsing via Docker's `env-file`. Users are defined in a string separated by spaces
+ - Added configurability for the tunnel device number
+
+
 ___
-
-
 
 
 #### Upstream Links
