@@ -8,8 +8,11 @@ export _datapath=/etc/openvpn
 
 _clibuild(){
     for (( i = 0 ; i < ${#OVPN_CLIENT_ARR[@]} ; i++ ))
-	do bash /usr/local/bin/easyrsa build-client-full ${#OVPN_CLIENT_ARR[${i}]} nopass \
-     	   && bash /usr/local/bin/ovpn_getclient ${#OVPN_CLIENT_ARR[${i}]} > ${_datapath}/clients/${#OVPN_CLIENT_ARR[${i}]}.ovpn
+	do bash /usr/local/bin/easyrsa build-client-full ${OVPN_CLIENT_ARR[${i}]} nopass \
+     	    && bash /usr/local/bin/ovpn_getclient ${OVPN_CLIENT_ARR[${i}]} \
+                > ${_datapath}/clients/${OVPN_CLIENT_ARR[${i}]}.ovpn \
+            && sed -e '8,12d' ${_datapath}/clients/${OVPN_CLIENT_ARR[${i}]}.ovpn \
+                > ${_datapath}/clients-enc-tunnel/${OVPN_CLIENT_ARR[${i}]}-et.ovpn
 	done
 }
 
@@ -107,6 +110,10 @@ fi
 
 if ! [[ -d ${_datapath}/clients ]]
 then mkdir ${_datapath}/clients
+fi
+
+if ! [[ -d ${_datapath}/clients-enc-tunnel ]]
+then mkdir ${_datapath}/clients-enc-tunnel
 fi
 
 if ! [[ -f ${_datapath}/clients/* ]] || ! [[ -z ${OVPN_CLIENT} ]]
