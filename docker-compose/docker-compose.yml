@@ -2,7 +2,7 @@ version: "3"
 
 services:
     open-vpn:
-        image: zalgonoise/openvpn-server
+        image: zalgonoise/openvpn-server:latest
         container_name: "ovpn"
         cap_add:
           - "NET_ADMIN"
