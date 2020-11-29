@@ -20,7 +20,7 @@ _clibuild(){
 # Function to summarize generating a client and outputting .ovpn file
 _genclient(){
 
-    OVPN_CLIENT_ARR=( $(echo ${OVPN_CLIENT}) )
+    OVPN_CLIENT_ARR=( $(echo ${OVPN_CLIENT} | sed 's/"//g') )
 
     if ! [[ ${#OVPN_CLIENT_ARR[@]} > 0 ]]
     then  
