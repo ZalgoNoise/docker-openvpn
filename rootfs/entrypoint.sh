@@ -116,7 +116,7 @@ if ! [[ -d ${_datapath}/clients-enc-tunnel ]]
 then mkdir ${_datapath}/clients-enc-tunnel
 fi
 
-if ! [[ -f ${_datapath}/clients/* ]] || ! [[ -z ${OVPN_CLIENT} ]]
+if [[ $( find ${_datapath}/clients -type f | wc -l) = 0 ]] || ! [[ -z ${OVPN_CLIENT} ]]
 then
    _genclient
 fi
